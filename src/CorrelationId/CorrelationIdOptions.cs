@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CorrelationId.Abstractions;
 
 namespace CorrelationId
@@ -86,5 +87,10 @@ namespace CorrelationId
         /// When set, this function will be used instead of the registered <see cref="ICorrelationIdProvider"/>.
         /// </summary>
         public Func<string> CorrelationIdGenerator { get; set; }
+
+        /// <summary>
+        /// A list of paths that should be excluded from correlation ID processing.
+        /// </summary>
+        public List<string> ExcludedPaths { get; set; } = new List<string>();
     }
 }

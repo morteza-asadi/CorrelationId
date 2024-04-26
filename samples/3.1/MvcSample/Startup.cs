@@ -39,6 +39,7 @@ namespace MvcSample
                 options.RequestHeader = "My-Custom-Correlation-Id";
                 options.ResponseHeader = "X-Correlation-Id";
                 options.UpdateTraceIdentifier = false;
+                options.ExcludedPaths.Add("/api/excluded");
             });
 
             // Example of registering a custom correlation ID provider

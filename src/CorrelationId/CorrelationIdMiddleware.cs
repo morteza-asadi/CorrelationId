@@ -45,6 +45,12 @@ namespace CorrelationId
         public async Task Invoke(HttpContext context, ICorrelationContextFactory correlationContextFactory)
         {
             Log.CorrelationIdProcessingBegin(_logger);
+            
+            if (IsExcludedEndpoint(context))
+            {
+                await _next(context);
+                return;
+            }
 
             if (_correlationIdProvider is null)
             {
@@ -127,6 +133,12 @@ namespace CorrelationId
 
             Log.DisposingCorrelationContext(_logger);
             correlationContextFactory.Dispose();
+        }
+        
+        private bool IsExcludedEndpoint(HttpContext context)
+        {
+            var path = context.Request.Path.ToString();
+            return _options.ExcludedPaths.Any(excludedPath => path.StartsWith(excludedPath, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool RequiresGenerationOfCorrelationId(bool idInHeader, StringValues idFromHeader) =>

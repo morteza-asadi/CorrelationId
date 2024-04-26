@@ -601,6 +601,40 @@ namespace CorrelationId.Tests
             Assert.Equal(correlationId, traceIdentifier);
         }
 
+        [Theory]
+        [InlineData("/excluded-path")]
+        [InlineData("/excluded-path", "/another-excluded-path")]
+        public async Task DoesNotSetCorrelationId_WhenPathIsInExcludedPaths(params string[] excludedPaths)
+        {
+            var builder = new WebHostBuilder()
+                .Configure(app => app.UseCorrelationId())
+                .ConfigureServices(sc => sc.AddDefaultCorrelationId(options =>
+                {
+                    foreach (var path in excludedPaths)
+                    {
+                        options.ExcludedPaths.Add(path);
+                    }
+                }));
+
+            using var server = new TestServer(builder);
+            var client = server.CreateClient();
+
+            foreach (var path in excludedPaths)
+            {
+                // Request to an excluded path
+                var responseExcluded = await client.GetAsync(path);
+                var excludedContainsHeader = responseExcluded.Headers.TryGetValues(CorrelationIdOptions.DefaultHeader, out var _);
+                Assert.False(excludedContainsHeader, $"Correlation ID should not be present for excluded path: {path}");
+            }
+
+            // Request to a non-excluded path
+            var responseIncluded = await client.GetAsync("/included-path");
+            var includedContainsHeader = responseIncluded.Headers.TryGetValues(CorrelationIdOptions.DefaultHeader, out var _);
+
+            // Assert
+            Assert.True(includedContainsHeader, "Correlation ID should be present for non-excluded paths.");
+        }
+        
         private class SingletonClass
         {
             private readonly ICorrelationContextAccessor _correlationContext;
